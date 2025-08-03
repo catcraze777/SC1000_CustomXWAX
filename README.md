@@ -1,4 +1,13 @@
-# SC1000
+# SC1000-Custom XWAX
+
+A fork of the SC1000 repository focused on adding improvements and bugfixes to the XWAX software used by the SC1000. The SC1000 already supports custom "xwax" executable files by running the xwax executable on the root of the USB drive used to store samples and beats if it is found, otherwise the internal stock copy is used. If you plan to use the SC1000 alone then this fork might not be useful for you. Most features added will be configurable in scsettings.txt as new options and new GPIO/MIDI mapping commands. It is not recommended to replace the xwax executable on the SD card containing the main OS for the SC1000.
+
+Current New Features/Bug Fixes:
+* Volume adjustment via MIDI mappings now fuctions correctly.
+
+To install a custom xwax executable, just place the file in the root directory of the beats/samples USB drive, alongside the scsettings.txt file. Updating/removing the custom software is as easy as replacing/deleting the xwax executable file on the USB drive.
+
+# SC1000 README
 ## Open-source portable digital scratch instrument
 
 This github holds source code and CAM files for the SC1000.
