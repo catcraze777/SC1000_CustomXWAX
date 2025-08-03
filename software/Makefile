@@ -15,14 +15,17 @@
 # MA 02110-1301, USA.
 #
 
-CC=/root/buildroot-2018.08.4/output/host/usr/bin/arm-linux-gcc
+# This is the filepath of the compiler you're going to use.
+
+#CC=/root/buildroot-2018.08.4/output/host/usr/bin/arm-linux-gcc
 #CC=gcc -g
+CC=/home/catcraze777/Downloads/buildroot-2018.08.4/output/host/usr/bin/arm-buildroot-linux-uclibcgnueabihf-gcc
 # Libraries and dependencies
 
 INSTALL ?= install
 
 SDL_CFLAGS ?= `sdl-config --cflags`
-SDL_LIBS ?= -L/root/buildroot-2018.08/output/host/lib -L/root/buildroot-2018.08/output/host/arm-buildroot-linux-uclibcgnueabihf/sysroot/usr/lib -Wl,-rpath,/root/buildroot-2018.08/output/host/arm-buildroot-linux-uclibcgnueabihf/sysroot/usr/lib 
+SDL_LIBS ?= -L/home/catcraze777/Downloads/buildroot-2018.08.4/output/host/lib -L/home/catcraze777/Downloads/buildroot-2018.08.4/output/host/arm-buildroot-linux-uclibcgnueabihf/sysroot/usr/lib -Wl,-rpath,/home/catcraze777/Downloads/buildroot-2018.08.4/output/host/arm-buildroot-linux-uclibcgnueabihf/sysroot/usr/lib 
 SDL_LIBS ?= -lpthread -liconv
 
 ALSA_LIBS ?= -lasound
@@ -40,6 +43,7 @@ DOCDIR ?= $(PREFIX)/share/doc
 
 CFLAGS ?= -O3
 CFLAGS += -Wall
+#CFLAGS += -no-pie -fno-pie
 CPPFLAGS += -MMD
 LDFLAGS ?= -O3
 
@@ -65,7 +69,7 @@ OBJS = controller.o \
 	midi.o \
 	xwax.o
 DEVICE_CPPFLAGS = -DWITH_ALSA
-DEVICE_LIBS = $(ALSA_LIBS)
+DEVICE_LIBS = $(ALSA_LIBS) -lc -U_FORTIFY_SOURCE
 
 # Optional device types
 
@@ -80,7 +84,7 @@ all:		xwax
 
 .PHONY:		FORCE
 .version:	FORCE
-		./mkversion -r
+#		./mkversion -r
 
 VERSION = $(shell ./mkversion)
 
@@ -92,7 +96,7 @@ xwax:		LDFLAGS += -pthread
 
 #xwax.o:		CFLAGS += $(SDL_CFLAGS)
 xwax.o:		CPPFLAGS += $(DEVICE_CPPFLAGS)
-xwax.o:		CPPFLAGS += -DEXECDIR=\"$(EXECDIR)\" -DVERSION=\"$(VERSION)\"
+xwax.o:		CPPFLAGS += -DEXECDIR=\"$(EXECDIR)\"
 xwax.o:		.version
 
 # Install to system

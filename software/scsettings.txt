@@ -204,6 +204,10 @@ gpio=0,15,1,3,CH1_DELETECUE
 # CHx_SHIFTOFF - Deactivate shift mode (also ignores x)
 # CHx_STARTSTOP - Start or Stop the track
 # CHx_PITCH - Change the speed of the track
+# CHx_VOLUME - Change the volume of the track. Use CC or potentially pitch bend for this. 
+#		Any received MIDI volume command will disable volume adjustment using the knobs on the back of the SC1000 until the next reboot.
+# CHx_VOLUP - Increase the volume of the track. Use with notes.
+# CHx_VOLDOWN - Decrease the volume of the track. Use with notes.
 # CHx_NOTEy - Change the pitch musically, replace y with the note number (60 being 0%)
 
 

@@ -159,6 +159,7 @@ void IOevent(struct mapping *map, unsigned char MidiBuffer[3])
 		else if (map->Action == ACTION_VOLUME)
 		{
 			deck[map->DeckNo].player.setVolume = (double)MidiBuffer[2] / 128.0;
+			scsettings.disablevolumeadc = 1;
 		}
 		else if (map->Action == ACTION_PITCH)
 		{
@@ -195,24 +196,28 @@ void IOevent(struct mapping *map, unsigned char MidiBuffer[3])
 		}
 		else if (map->Action == ACTION_VOLUP)
 		{
+			scsettings.disablevolumeadc = 1;
 			deck[map->DeckNo].player.setVolume += scsettings.volAmount;
 			if (deck[map->DeckNo].player.setVolume > 1.0)
 				deck[map->DeckNo].player.setVolume = 1.0;
 		}
 		else if (map->Action == ACTION_VOLDOWN)
 		{
+			scsettings.disablevolumeadc = 1;
 			deck[map->DeckNo].player.setVolume -= scsettings.volAmount;
 			if (deck[map->DeckNo].player.setVolume < 0.0)
 				deck[map->DeckNo].player.setVolume = 0.0;
 		}
 		else if (map->Action == ACTION_VOLUHOLD)
 		{
+			scsettings.disablevolumeadc = 1;
 			deck[map->DeckNo].player.setVolume += scsettings.volAmountHeld;
 			if (deck[map->DeckNo].player.setVolume > 1.0)
 				deck[map->DeckNo].player.setVolume = 1.0;
 		}
 		else if (map->Action == ACTION_VOLDHOLD)
 		{
+			scsettings.disablevolumeadc = 1;
 			deck[map->DeckNo].player.setVolume -= scsettings.volAmountHeld;
 			if (deck[map->DeckNo].player.setVolume < 0.0)
 				deck[map->DeckNo].player.setVolume = 0.0;

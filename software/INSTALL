@@ -2,11 +2,22 @@ The recommended way to build xwax is to run "make" with your chosen
 compile options, followed optionally by "make install" to install at
 the given prefix; eg.
 
-  $ make PREFIX=/usr ALSA=yes
-  $ make PREFIX=/usr ALSA=yes install  # as root
+  $ make PREFIX=/root ALSA=yes
+  
+Add the compiled "xwax" executable to the root of your USB drive. A 
+stock SC1000 already lets you overwrite the internal copy of xwax with one on the USB drive.
+For compilation, use an arm-linux-uclibcgnueabihf-gcc compiler. I'd recommend 
+setting up buildroot to do this, which should have a mostly preconfigured .config 
+file for the Olimex A13-SOM-256 board or the Allwinner A13 ARM Cortex A8 SoC processor. 
+Important things for compilation are to ensure you're using uClibc as your C library, 
+you have shared and static linking enabled (Not either or alone), 
+and you've enabled the alsa-lib sound library.
+
+Don't forget to edit the Makefile so it uses the correct compiler.
 
 If PREFIX is not given, the user's home directory is used and "make
-install" does not need to be run as root.
+install" does not need to be run as root. This will cause the sound libraries to not
+be found by the program when executed so don't forget this.
 
 Different audio device types are enabled using the compile options:
 
