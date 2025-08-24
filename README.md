@@ -11,6 +11,8 @@ Current New Features/Bug Fixes:
 
 To install a custom xwax executable, just place the file in the root directory of the beats/samples USB drive, alongside the scsettings.txt file. Updating/removing the custom software is as easy as replacing/deleting the xwax executable file on the USB drive.
 
+Link to the compiled xwax executable to download is [here](https://github.com/catcraze777/SC1000_CustomXWAX/blob/master/software/xwax).
+
 # SC1000 README
 ## Open-source portable digital scratch instrument
 
