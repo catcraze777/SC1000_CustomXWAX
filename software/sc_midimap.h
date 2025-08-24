@@ -52,10 +52,10 @@
 #define ACTION_JOGREVERSE 24
 #define ACTION_BEND 25
 #define ACTION_FLIPDECKS 26
-#define ACTION_STARTSTOP_FLIP 27
-#define ACTION_CUE_FLIP 28
-#define ACTION_DELETECUE_FLIP 29
-#define ACTION_NOTHING 255
+#define ACTION_NOTHING 127
+
+// Use the MSB of the unsigned char to state if the command can be flipped by ACTION_FLIPDECKS.
+#define FLIP_BIT 128
 
 #define MAP_MIDI 0
 #define MAP_IO 1

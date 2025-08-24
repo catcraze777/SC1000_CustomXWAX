@@ -82,14 +82,18 @@ unsigned char QueuedMidiBuffer[3];
 
 void IOevent(struct mapping *map, unsigned char MidiBuffer[3])
 {
-	int flippedDeckNo = map->DeckNo;
-	if (scsettings.areDecksFlipped) flippedDeckNo = flippedDeckNo ^ 1;
-
 	if (map != NULL)
 	{
 		//printf("Map notnull type:%d deck:%d po:%d edge:%d pin:%d action:%d param:%d\n", map->Type, map->DeckNo, map->port, map->Edge, map->Pin, map->Action, map->Param);
 		//dump_maps();
-		if (map->Action == ACTION_CUE)
+		unsigned char unprocessedAction = map->Action;
+		unsigned char currAction = unprocessedAction & (~FLIP_BIT);
+		unsigned char isActionFlipped = unprocessedAction & FLIP_BIT;
+
+		int targetDeck = map->DeckNo;
+		if (scsettings.areDecksFlipped && isActionFlipped) targetDeck = targetDeck ^ 1;
+
+		if (currAction == ACTION_CUE)
 		{
 			unsigned int cuenum = 0;
 			if (map->Type == MAP_MIDI)
@@ -98,12 +102,12 @@ void IOevent(struct mapping *map, unsigned char MidiBuffer[3])
 				cuenum = (map->port * 32) + map->Pin + 128;
 
 			/*if (shifted)
-				deck_unset_cue(&deck[map->DeckNo], cuenum);
+				deck_unset_cue(&deck[targetDeck], cuenum);
 			else*/
 
-			deck_cue(&deck[map->DeckNo], cuenum);
+			deck_cue(&deck[targetDeck], cuenum);
 		}
-		else if (map->Action == ACTION_DELETECUE)
+		else if (currAction == ACTION_DELETECUE)
 		{
 			unsigned int cuenum = 0;
 			if (map->Type == MAP_MIDI)
@@ -112,90 +116,59 @@ void IOevent(struct mapping *map, unsigned char MidiBuffer[3])
 				cuenum = (map->port * 32) + map->Pin + 128;
 
 			//if (shifted)
-			deck_unset_cue(&deck[map->DeckNo], cuenum);
+			deck_unset_cue(&deck[targetDeck], cuenum);
 			/*else
-				deck_cue(&deck[map->DeckNo], cuenum);*/
+				deck_cue(&deck[targetDeck], cuenum);*/
 		}
-		if (map->Action == ACTION_CUE_FLIP)
+		else if (currAction == ACTION_NOTE)
 		{
-			unsigned int cuenum = 0;
-			if (map->Type == MAP_MIDI)
-				cuenum = map->MidiBytes[1];
-			else
-				cuenum = (map->port * 32) + map->Pin + 128;
-
-			/*if (shifted)
-				deck_unset_cue(&deck[map->DeckNo], cuenum);
-			else*/
-
-			deck_cue(&deck[flippedDeckNo], cuenum);
+			deck[targetDeck].player.note_pitch = pow(pow(2, (double)1 / 12), map->Param - 0x3C); // equal temperament
 		}
-		else if (map->Action == ACTION_DELETECUE_FLIP)
+		else if (currAction == ACTION_STARTSTOP)
 		{
-			unsigned int cuenum = 0;
-			if (map->Type == MAP_MIDI)
-				cuenum = map->MidiBytes[1];
-			else
-				cuenum = (map->port * 32) + map->Pin + 128;
-
-			//if (shifted)
-			deck_unset_cue(&deck[flippedDeckNo], cuenum);
-			/*else
-				deck_cue(&deck[map->DeckNo], cuenum);*/
+			deck[targetDeck].player.stopped = !deck[targetDeck].player.stopped;
 		}
-		else if (map->Action == ACTION_NOTE)
-		{
-			deck[map->DeckNo].player.note_pitch = pow(pow(2, (double)1 / 12), map->Param - 0x3C); // equal temperament
-		}
-		else if (map->Action == ACTION_STARTSTOP)
-		{
-			deck[map->DeckNo].player.stopped = !deck[map->DeckNo].player.stopped;
-		}
-		else if (map->Action == ACTION_STARTSTOP_FLIP)
-		{
-			deck[flippedDeckNo].player.stopped = !deck[flippedDeckNo].player.stopped;
-		}
-		else if (map->Action == ACTION_SHIFTON)
+		else if (currAction == ACTION_SHIFTON)
 		{
 			printf("Shifton\n");
 			shifted = 1;
 		}
-		else if (map->Action == ACTION_SHIFTOFF)
+		else if (currAction == ACTION_SHIFTOFF)
 		{
 			printf("Shiftoff\n");
 			shifted = 0;
 		}
-		else if (map->Action == ACTION_NEXTFILE)
+		else if (currAction == ACTION_NEXTFILE)
 		{
-			deck_next_file(&deck[map->DeckNo]);
+			deck_next_file(&deck[targetDeck]);
 		}
-		else if (map->Action == ACTION_PREVFILE)
+		else if (currAction == ACTION_PREVFILE)
 		{
-			deck_prev_file(&deck[map->DeckNo]);
+			deck_prev_file(&deck[targetDeck]);
 		}
-		else if (map->Action == ACTION_RANDOMFILE)
+		else if (currAction == ACTION_RANDOMFILE)
 		{
-			deck_random_file(&deck[map->DeckNo]);
+			deck_random_file(&deck[targetDeck]);
 		}
-		else if (map->Action == ACTION_NEXTFOLDER)
+		else if (currAction == ACTION_NEXTFOLDER)
 		{
-			deck_next_folder(&deck[map->DeckNo]);
+			deck_next_folder(&deck[targetDeck]);
 		}
-		else if (map->Action == ACTION_PREVFOLDER)
+		else if (currAction == ACTION_PREVFOLDER)
 		{
-			deck_prev_folder(&deck[map->DeckNo]);
+			deck_prev_folder(&deck[targetDeck]);
 		}
-		else if (map->Action == ACTION_RECORD)
+		else if (currAction == ACTION_RECORD)
 		{
 			if (deck[1].filesPresent)
 				deck_record(&deck[0]); // Always record on deck 0
 		}
-		else if (map->Action == ACTION_VOLUME)
+		else if (currAction == ACTION_VOLUME)
 		{
-			deck[map->DeckNo].player.setVolume = (double)MidiBuffer[2] / 128.0;
+			deck[targetDeck].player.setVolume = (double)MidiBuffer[2] / 128.0;
 			scsettings.disablevolumeadc = 1;
 		}
-		else if (map->Action == ACTION_PITCH)
+		else if (currAction == ACTION_PITCH)
 		{
 			if (map->Type == MAP_MIDI)
 			{
@@ -212,61 +185,61 @@ void IOevent(struct mapping *map, unsigned char MidiBuffer[3])
 					pitch = (((double)MidiBuffer[2] - 64.0) * ((double)scsettings.pitchrange / 6400.0) + 1);
 				}
 
-				deck[map->DeckNo].player.fader_pitch = pitch;
+				deck[targetDeck].player.fader_pitch = pitch;
 			}
 		}
-		else if (map->Action == ACTION_JOGPIT)
+		else if (currAction == ACTION_JOGPIT)
 		{
-			pitchMode = map->DeckNo + 1;
+			pitchMode = targetDeck + 1;
 			printf("Set Pitch Mode %d\n", pitchMode);
 		}
-		else if (map->Action == ACTION_JOGPSTOP)
+		else if (currAction == ACTION_JOGPSTOP)
 		{
 			pitchMode = 0;
 		}
-		else if (map->Action == ACTION_SC500)
+		else if (currAction == ACTION_SC500)
 		{
 			printf("SC500 detected\n");
 		}
-		else if (map->Action == ACTION_VOLUP)
+		else if (currAction == ACTION_VOLUP)
 		{
 			scsettings.disablevolumeadc = 1;
-			deck[map->DeckNo].player.setVolume += scsettings.volAmount;
-			if (deck[map->DeckNo].player.setVolume > 1.0)
-				deck[map->DeckNo].player.setVolume = 1.0;
+			deck[targetDeck].player.setVolume += scsettings.volAmount;
+			if (deck[targetDeck].player.setVolume > 1.0)
+				deck[targetDeck].player.setVolume = 1.0;
 		}
-		else if (map->Action == ACTION_VOLDOWN)
+		else if (currAction == ACTION_VOLDOWN)
 		{
 			scsettings.disablevolumeadc = 1;
-			deck[map->DeckNo].player.setVolume -= scsettings.volAmount;
-			if (deck[map->DeckNo].player.setVolume < 0.0)
-				deck[map->DeckNo].player.setVolume = 0.0;
+			deck[targetDeck].player.setVolume -= scsettings.volAmount;
+			if (deck[targetDeck].player.setVolume < 0.0)
+				deck[targetDeck].player.setVolume = 0.0;
 		}
-		else if (map->Action == ACTION_VOLUHOLD)
+		else if (currAction == ACTION_VOLUHOLD)
 		{
 			scsettings.disablevolumeadc = 1;
-			deck[map->DeckNo].player.setVolume += scsettings.volAmountHeld;
-			if (deck[map->DeckNo].player.setVolume > 1.0)
-				deck[map->DeckNo].player.setVolume = 1.0;
+			deck[targetDeck].player.setVolume += scsettings.volAmountHeld;
+			if (deck[targetDeck].player.setVolume > 1.0)
+				deck[targetDeck].player.setVolume = 1.0;
 		}
-		else if (map->Action == ACTION_VOLDHOLD)
+		else if (currAction == ACTION_VOLDHOLD)
 		{
 			scsettings.disablevolumeadc = 1;
-			deck[map->DeckNo].player.setVolume -= scsettings.volAmountHeld;
-			if (deck[map->DeckNo].player.setVolume < 0.0)
-				deck[map->DeckNo].player.setVolume = 0.0;
+			deck[targetDeck].player.setVolume -= scsettings.volAmountHeld;
+			if (deck[targetDeck].player.setVolume < 0.0)
+				deck[targetDeck].player.setVolume = 0.0;
 		}
-		else if (map->Action == ACTION_JOGREVERSE)
+		else if (currAction == ACTION_JOGREVERSE)
 		{
 			printf("Reversed Jog Wheel - %d", scsettings.jogReverse);
 			scsettings.jogReverse = !scsettings.jogReverse;
 			printf(",%d", scsettings.jogReverse);
 		}
-		else if (map->Action == ACTION_BEND) // temporary bend of pitch that goes on top of the other pitch values
+		else if (currAction == ACTION_BEND) // temporary bend of pitch that goes on top of the other pitch values
 		{
-			deck[map->DeckNo].player.bend_pitch = pow(pow(2, (double)1 / 12), map->Param - 0x3C);
+			deck[targetDeck].player.bend_pitch = pow(pow(2, (double)1 / 12), map->Param - 0x3C);
 		}
-		else if (map->Action == ACTION_FLIPDECKS) // Flip around the two deck objects.
+		else if (currAction == ACTION_FLIPDECKS) // Flip around the two deck objects.
 		{
 			scsettings.areDecksFlipped = ! scsettings.areDecksFlipped;
 			int tempDeck = scsettings.deckSamples;
@@ -292,21 +265,17 @@ void add_config_mapping(struct mapping **maps, unsigned char Type, unsigned char
 	if (actions[2] == '1')
 		deckno = 1;
 
+	char *substringPointer;
 	// figure out which action it is
-	if (strstr(actions + 4, "FLIP_CUE") != NULL)
-		action = ACTION_CUE_FLIP;
+	
+	if (strstr(actions + 4, "DELETECUE") != NULL)
+		action = ACTION_DELETECUE;
 	else if (strstr(actions + 4, "CUE") != NULL)
 		action = ACTION_CUE;
-	else if (strstr(actions + 4, "FLIP_DELETECUE") != NULL)
-		action = ACTION_DELETECUE_FLIP;
-	else if (strstr(actions + 4, "DELETECUE") != NULL)
-		action = ACTION_DELETECUE;
 	else if (strstr(actions + 4, "SHIFTON") != NULL)
 		action = ACTION_SHIFTON;
 	else if (strstr(actions + 4, "SHIFTOFF") != NULL)
 		action = ACTION_SHIFTOFF;
-	else if (strstr(actions + 4, "FLIP_STARTSTOP") != NULL)
-		action = ACTION_STARTSTOP_FLIP;
 	else if (strstr(actions + 4, "STARTSTOP") != NULL)
 		action = ACTION_STARTSTOP;
 	else if (strstr(actions + 4, "GND") != NULL)
@@ -348,11 +317,16 @@ void add_config_mapping(struct mapping **maps, unsigned char Type, unsigned char
 		scsettings.canFlipDecks = true;
 		action = ACTION_FLIPDECKS;
 	}	
-	else if (strstr(actions + 4, "NOTE") != NULL)
+	else if ((substringPointer = strstr(actions + 4, "NOTE")) != NULL)
 	{
 		action = ACTION_NOTE;
-		parameter = atoi(actions + 8);
-	}
+		parameter = atoi(substringPointer + 4);
+	} else action = ACTION_NOTHING;
+
+	// Toggle the flip bit if the flip parameter is added.
+	if (strstr(actions + 4, "FLIP") != NULL && action != ACTION_FLIPDECKS)
+		action = action | FLIP_BIT;
+
 	add_mapping(maps, Type, deckno, buf, port, Pin, Pullup, Edge, action, parameter);
 }
 

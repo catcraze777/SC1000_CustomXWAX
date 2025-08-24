@@ -76,8 +76,6 @@ samplefolder=samples
 # (replace x with 0 for beats or 1 for samples) :
 # CHx_CUE - Set and trigger cue points
 # CHx_DELETECUE - Delete saved cue points
-# CHx_FLIP_CUE - Set and trigger cue points, flips target deck when FLIPDECKS is triggered. 
-# CHx_FLIP_DELETECUE - Delete saved cue points, flips target deck when FLIPDECKS is triggered. 
 # CHx_SHIFTON - Activate shift mode (ignores x)
 # CHx_SHIFTOFF - Deactivate shift mode (also ignores x)
 # CHx_STARTSTOP - Start or Stop the track
@@ -85,7 +83,10 @@ samplefolder=samples
 # CHx_NOTEy - Change the pitch musically, replace y with the note number (60 being 0%)
 # CHx_FLIPDECKS - Flip the two decks so you can interact with the beats deck. 
 #                 Other controls (such as cues, volume, and file switching) are unaffected. (ignores x)
-# CHx_FLIP_STARTSTOP - Same as STARTSTOP with an initial deck assigned, but flips target deck when FLIPDECKS is triggered.
+#
+# Appending "_FLIP" to any command (Ex: CH1_CUE_FLIP) will flip the target deck 
+#      affected by the command when CHx_FLIPDECKS is triggered.
+#
 # gpio=port,pin,pull,edge,action
 
 #### SC500 Buttons ####
@@ -101,7 +102,7 @@ gpio=2,14,1,1,CH0_PREVFILE
 gpio=2,14,1,2,CH0_PREVFOLDER
 gpio=2,14,1,3,CH0_RANDOMFILE
 
-gpio=2,13,1,1,CH0_FLIP_STARTSTOP
+gpio=2,13,1,1,CH0_STARTSTOP_FLIP
 
 # even though this is on a beat button it still affects sample
 gpio=2,13,1,3,CH1_JOGREVERSE
@@ -123,7 +124,7 @@ gpio=2,5,1,2,CH1_PREVFOLDER
 gpio=2,5,1,3,CH1_JOGPIT
 gpio=2,5,1,0,CH1_JOGPSTOP
 
-gpio=2,6,1,1,CH1_FLIP_STARTSTOP
+gpio=2,6,1,1,CH1_STARTSTOP_FLIP
 gpio=2,6,1,3,CH1_RECORD
 
 gpio=2,8,1,1,CH1_NEXTFILE
@@ -137,66 +138,66 @@ gpio=1,4,1,1,CH1_VOLDOWN
 gpio=1,4,1,2,CH1_VOLDHOLD
 
 # Sample cue buttons
-gpio=2,4,1,1,CH1_FLIP_CUE
-gpio=2,4,1,3,CH1_FLIP_DELETECUE
-gpio=2,7,1,1,CH1_FLIP_CUE
-gpio=2,7,1,3,CH1_FLIP_DELETECUE
-gpio=2,11,1,1,CH1_FLIP_CUE
-gpio=2,11,1,3,CH1_FLIP_DELETECUE
-gpio=2,12,1,1,CH1_FLIP_CUE
-gpio=2,12,1,3,CH1_FLIP_DELETECUE
+gpio=2,4,1,1,CH1_CUE_FLIP
+gpio=2,4,1,3,CH1_DELETECUE_FLIP
+gpio=2,7,1,1,CH1_CUE_FLIP
+gpio=2,7,1,3,CH1_DELETECUE_FLIP
+gpio=2,11,1,1,CH1_CUE_FLIP
+gpio=2,11,1,3,CH1_DELETECUE_FLIP
+gpio=2,12,1,1,CH1_CUE_FLIP
+gpio=2,12,1,3,CH1_DELETECUE_FLIP
 
 
 #### Expansion port J7 ####
 #gpio=6,10,1,1,CH0_SHIFTON
 #gpio=6,10,1,0,CH0_SHIFTOFF
-gpio=6,10,1,1,CH1_FLIP_STARTSTOP
-gpio=1,15,1,1,CH0_FLIP_STARTSTOP
-gpio=1,16,1,1,CH1_FLIP_STARTSTOP
+gpio=6,10,1,1,CH1_STARTSTOP_FLIP
+gpio=1,15,1,1,CH0_STARTSTOP_FLIP
+gpio=1,16,1,1,CH1_STARTSTOP_FLIP
 
-gpio=2,3,1,1,CH1_FLIP_CUE
-gpio=2,0,1,1,CH1_FLIP_CUE
-gpio=2,2,1,1,CH1_FLIP_CUE
-gpio=2,1,1,1,CH1_FLIP_CUE
+gpio=2,3,1,1,CH1_CUE_FLIP
+gpio=2,0,1,1,CH1_CUE_FLIP
+gpio=2,2,1,1,CH1_CUE_FLIP
+gpio=2,1,1,1,CH1_CUE_FLIP
 
-gpio=2,3,1,3,CH1_FLIP_DELETECUE
-gpio=2,0,1,3,CH1_FLIP_DELETECUE
-gpio=2,2,1,3,CH1_FLIP_DELETECUE
-gpio=2,1,1,3,CH1_FLIP_DELETECUE
+gpio=2,3,1,3,CH1_DELETECUE_FLIP
+gpio=2,0,1,3,CH1_DELETECUE_FLIP
+gpio=2,2,1,3,CH1_DELETECUE_FLIP
+gpio=2,1,1,3,CH1_DELETECUE_FLIP
 
 
 #### MCP23017 Buttons ####
 gpio=0,0,0,1,CH0_GND
 
-gpio=0,1,1,1,CH1_FLIP_CUE
-gpio=0,2,1,1,CH1_FLIP_CUE
-gpio=0,3,1,1,CH1_FLIP_CUE
-gpio=0,4,1,1,CH1_FLIP_CUE
-gpio=0,5,1,1,CH1_FLIP_CUE
-gpio=0,6,1,1,CH1_FLIP_CUE
-gpio=0,7,1,1,CH1_FLIP_CUE
+gpio=0,1,1,1,CH1_CUE_FLIP
+gpio=0,2,1,1,CH1_CUE_FLIP
+gpio=0,3,1,1,CH1_CUE_FLIP
+gpio=0,4,1,1,CH1_CUE_FLIP
+gpio=0,5,1,1,CH1_CUE_FLIP
+gpio=0,6,1,1,CH1_CUE_FLIP
+gpio=0,7,1,1,CH1_CUE_FLIP
 
-gpio=0,1,1,3,CH1_FLIP_DELETECUE
-gpio=0,2,1,3,CH1_FLIP_DELETECUE
-gpio=0,3,1,3,CH1_FLIP_DELETECUE
-gpio=0,4,1,3,CH1_FLIP_DELETECUE
-gpio=0,5,1,3,CH1_FLIP_DELETECUE
-gpio=0,6,1,3,CH1_FLIP_DELETECUE
-gpio=0,7,1,3,CH1_FLIP_DELETECUE
+gpio=0,1,1,3,CH1_DELETECUE_FLIP
+gpio=0,2,1,3,CH1_DELETECUE_FLIP
+gpio=0,3,1,3,CH1_DELETECUE_FLIP
+gpio=0,4,1,3,CH1_DELETECUE_FLIP
+gpio=0,5,1,3,CH1_DELETECUE_FLIP
+gpio=0,6,1,3,CH1_DELETECUE_FLIP
+gpio=0,7,1,3,CH1_DELETECUE_FLIP
 
-gpio=0,8,1,1,CH1_FLIP_STARTSTOP
+gpio=0,8,1,1,CH1_STARTSTOP_FLIP
 gpio=0,9,1,1,CH0_SHIFTON
 gpio=0,9,1,0,CH0_SHIFTOFF 
-gpio=0,10,1,1,CH1_FLIP_CUE
-gpio=0,10,1,3,CH1_FLIP_DELETECUE
-gpio=0,11,1,1,CH0_FLIP_STARTSTOP
+gpio=0,10,1,1,CH1_CUE_FLIP
+gpio=0,10,1,3,CH1_DELETECUE_FLIP
+gpio=0,11,1,1,CH0_STARTSTOP_FLIP
 gpio=0,12,0,1,CH1_GND
-gpio=0,13,1,1,CH1_FLIP_CUE
-gpio=0,14,1,1,CH1_FLIP_CUE
-gpio=0,15,1,1,CH1_FLIP_CUE
-gpio=0,13,1,3,CH1_FLIP_DELETECUE
-gpio=0,14,1,3,CH1_FLIP_DELETECUE
-gpio=0,15,1,3,CH1_FLIP_DELETECUE
+gpio=0,13,1,1,CH1_CUE_FLIP
+gpio=0,14,1,1,CH1_CUE_FLIP
+gpio=0,15,1,1,CH1_CUE_FLIP
+gpio=0,13,1,3,CH1_DELETECUE_FLIP
+gpio=0,14,1,3,CH1_DELETECUE_FLIP
+gpio=0,15,1,3,CH1_DELETECUE_FLIP
 
 
 
@@ -220,8 +221,6 @@ gpio=0,15,1,3,CH1_FLIP_DELETECUE
 # Action can be (replace x with 0 for beats or 1 for samples) :
 # CHx_CUE - Set and trigger cue points
 # CHx_DELETECUE - Delete saved cue points
-# CHx_FLIP_CUE - Set and trigger cue points, flips target deck when FLIPDECKS is triggered. 
-# CHx_FLIP_DELETECUE - Delete saved cue points, flips target deck when FLIPDECKS is triggered. 
 # CHx_SHIFTON - Activate shift mode (ignores x)
 # CHx_SHIFTOFF - Deactivate shift mode (also ignores x)
 # CHx_STARTSTOP - Start or Stop the track
@@ -229,7 +228,9 @@ gpio=0,15,1,3,CH1_FLIP_DELETECUE
 # CHx_NOTEy - Change the pitch musically, replace y with the note number (60 being 0%)
 # CHx_FLIPDECKS - Flip the two decks so you can interact with the beats deck. 
 #                 Other controls (such as cues, volume, and file switching) are unaffected. (ignores x)
-# CHx_FLIP_STARTSTOP - Same as STARTSTOP with an initial deck assigned, but flips target deck when FLIPDECKS is triggered.
+#
+# Appending "_FLIP" to any command (Ex: CH1_CUE_FLIP) will flip the target deck 
+#      affected by the command when CHx_FLIPDECKS is triggered.
 
 
 
@@ -245,13 +246,13 @@ midii=11,2,0,1,CH0_PITCH
 midii=11,3,0,1,CH1_PITCH
 
 # notes on channels 0 and 1 are cue points
-midii=9,0,255,1,CH0_FLIP_CUE
-midii=9,1,255,1,CH1_FLIP_CUE
+midii=9,0,255,1,CH0_CUE_FLIP
+midii=9,1,255,1,CH1_CUE_FLIP
 
 
 # Also add the delete cue command for shift modifier
-midii=9,0,255,3,CH0_FLIP_DELETECUE
-midii=9,1,255,3,CH1_FLIP_DELETECUE
+midii=9,0,255,3,CH0_DELETECUE_FLIP
+midii=9,1,255,3,CH1_DELETECUE_FLIP
 
 
 # Notes on channel 3 are C1-style notes
