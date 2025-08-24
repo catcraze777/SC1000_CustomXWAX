@@ -60,6 +60,10 @@ SC_SETTINGS scsettings;
 
 struct mapping *maps = NULL;
 
+char deck0FolderString[maxPathLength] = "/media/sda/beats/";
+char deck1FolderString[maxPathLength] = "/media/sda/samples/";
+int deckFolderStartIndex = strlen("/media/sda/");
+
 unsigned int countChars(char *string, char c)
 {
 	unsigned int count = 0;
@@ -111,6 +115,11 @@ void loadSettings()
 	scsettings.ioRemapped = 0;
 	scsettings.jogReverse = 0;
 	scsettings.cutbeats = 0;
+	scsettings.areDecksFlipped = false;
+	scsettings.deckBeats = 0;
+	scsettings.deckSamples = 1;
+	scsettings.canFlipDecks = false;
+	scsettings.flipFader = true;
 
 	// later we'll check for sc500 pin and use it to set following settings
 	scsettings.disablevolumeadc = 0;
@@ -167,6 +176,30 @@ void loadSettings()
 					scsettings.jogReverse = atoi(value);
 				else if (strcmp(param, "cutbeats") == 0)
 					scsettings.cutbeats = atoi(value);
+				else if (strcmp(param, "flipfader") == 0)
+					scsettings.flipFader = atoi(value);
+				else if (strcmp(param, "beatfolder") == 0)
+				{
+					int inputLength = strlen(value);
+					// Replace '\n' at the end of the value string into '/'
+					value[inputLength - 1] = '/';
+					// Ensure folder name isn't too long, otherwise cut it down. +1 to account for a null terminator at the end.
+					if (deckFolderStartIndex + inputLength + 1 > maxPathLength)
+						value[maxPathLength - deckFolderStartIndex - 2] = '\0';
+
+					strcpy(deck0FolderString + deckFolderStartIndex, value);
+				}
+				else if (strcmp(param, "samplefolder") == 0)
+				{
+					int inputLength = strlen(value);
+					// Replace '\n' at the end of the value string into '/'
+					value[inputLength - 1] = '/';
+					// Ensure folder name isn't too long, otherwise cut it down. +1 to account for a null terminator at the end.
+					if (deckFolderStartIndex + inputLength + 1 > maxPathLength)
+						value[maxPathLength - deckFolderStartIndex - 2] = '\0';
+
+					strcpy(deck1FolderString + deckFolderStartIndex, value);
+				}
 				else if (strstr(param, "midii") != NULL)
 				{
 					scsettings.midiRemapped = 1;
@@ -311,6 +344,8 @@ int main(int argc, char *argv[])
 
 	rate = 48000;
 
+	
+
 	alsa_init(&deck[0].device, "hw:0,0", rate, scsettings.buffersize, 0);
 	alsa_init(&deck[1].device, "hw:0,0", rate, scsettings.buffersize, 1);
 
@@ -323,14 +358,14 @@ int main(int argc, char *argv[])
 
 	// Tell deck0 to just play without considering inputs
 
-	deck[0].player.justPlay = 1;
+	// deck[0].player.justPlay = 1;
 
 	alsa_clear_config_cache();
 
 	rc = EXIT_FAILURE; /* until clean exit */
 
 	// Check for samples folder
-	if (access("/media/sda/samples", F_OK) == -1)
+	if (access(deck1FolderString, F_OK) == -1)
 	{
 		// Not there, so presumably the boot script didn't manage to mount the drive
 		// Maybe it hasn't initialized yet, or at least wasn't at boot time
@@ -355,8 +390,8 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	deck_load_folder(&deck[0], "/media/sda/beats/");
-	deck_load_folder(&deck[1], "/media/sda/samples/");
+	deck_load_folder(&deck[0], deck0FolderString);
+	deck_load_folder(&deck[1], deck1FolderString);
 	if (!deck[1].filesPresent)
 	{
 		// Load the default sentence if no sample files found on usb stick

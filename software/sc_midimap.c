@@ -82,6 +82,8 @@ unsigned char QueuedMidiBuffer[3];
 
 void IOevent(struct mapping *map, unsigned char MidiBuffer[3])
 {
+	int flippedDeckNo = map->DeckNo;
+	if (scsettings.areDecksFlipped) flippedDeckNo = flippedDeckNo ^ 1;
 
 	if (map != NULL)
 	{
@@ -98,6 +100,7 @@ void IOevent(struct mapping *map, unsigned char MidiBuffer[3])
 			/*if (shifted)
 				deck_unset_cue(&deck[map->DeckNo], cuenum);
 			else*/
+
 			deck_cue(&deck[map->DeckNo], cuenum);
 		}
 		else if (map->Action == ACTION_DELETECUE)
@@ -113,6 +116,33 @@ void IOevent(struct mapping *map, unsigned char MidiBuffer[3])
 			/*else
 				deck_cue(&deck[map->DeckNo], cuenum);*/
 		}
+		if (map->Action == ACTION_CUE_FLIP)
+		{
+			unsigned int cuenum = 0;
+			if (map->Type == MAP_MIDI)
+				cuenum = map->MidiBytes[1];
+			else
+				cuenum = (map->port * 32) + map->Pin + 128;
+
+			/*if (shifted)
+				deck_unset_cue(&deck[map->DeckNo], cuenum);
+			else*/
+
+			deck_cue(&deck[flippedDeckNo], cuenum);
+		}
+		else if (map->Action == ACTION_DELETECUE_FLIP)
+		{
+			unsigned int cuenum = 0;
+			if (map->Type == MAP_MIDI)
+				cuenum = map->MidiBytes[1];
+			else
+				cuenum = (map->port * 32) + map->Pin + 128;
+
+			//if (shifted)
+			deck_unset_cue(&deck[flippedDeckNo], cuenum);
+			/*else
+				deck_cue(&deck[map->DeckNo], cuenum);*/
+		}
 		else if (map->Action == ACTION_NOTE)
 		{
 			deck[map->DeckNo].player.note_pitch = pow(pow(2, (double)1 / 12), map->Param - 0x3C); // equal temperament
@@ -120,6 +150,10 @@ void IOevent(struct mapping *map, unsigned char MidiBuffer[3])
 		else if (map->Action == ACTION_STARTSTOP)
 		{
 			deck[map->DeckNo].player.stopped = !deck[map->DeckNo].player.stopped;
+		}
+		else if (map->Action == ACTION_STARTSTOP_FLIP)
+		{
+			deck[flippedDeckNo].player.stopped = !deck[flippedDeckNo].player.stopped;
 		}
 		else if (map->Action == ACTION_SHIFTON)
 		{
@@ -232,6 +266,18 @@ void IOevent(struct mapping *map, unsigned char MidiBuffer[3])
 		{
 			deck[map->DeckNo].player.bend_pitch = pow(pow(2, (double)1 / 12), map->Param - 0x3C);
 		}
+		else if (map->Action == ACTION_FLIPDECKS) // Flip around the two deck objects.
+		{
+			scsettings.areDecksFlipped = ! scsettings.areDecksFlipped;
+			int tempDeck = scsettings.deckSamples;
+			scsettings.deckSamples = scsettings.deckBeats;
+			scsettings.deckBeats = tempDeck;
+
+			// Ensure the decks are using the same jog wheel values to avoid sudden skips when switching between decks.
+			deck[scsettings.deckSamples].encoderAngle = deck[scsettings.deckBeats].encoderAngle;
+			// Ensure the new beat deck isnt held still (paused) after switching.
+			deck[scsettings.deckBeats].player.capTouch = 0;
+		}
 	}
 }
 
@@ -247,14 +293,20 @@ void add_config_mapping(struct mapping **maps, unsigned char Type, unsigned char
 		deckno = 1;
 
 	// figure out which action it is
-	if (strstr(actions + 4, "CUE") != NULL)
+	if (strstr(actions + 4, "FLIP_CUE") != NULL)
+		action = ACTION_CUE_FLIP;
+	else if (strstr(actions + 4, "CUE") != NULL)
 		action = ACTION_CUE;
-	if (strstr(actions + 4, "DELETECUE") != NULL)
+	else if (strstr(actions + 4, "FLIP_DELETECUE") != NULL)
+		action = ACTION_DELETECUE_FLIP;
+	else if (strstr(actions + 4, "DELETECUE") != NULL)
 		action = ACTION_DELETECUE;
 	else if (strstr(actions + 4, "SHIFTON") != NULL)
 		action = ACTION_SHIFTON;
 	else if (strstr(actions + 4, "SHIFTOFF") != NULL)
 		action = ACTION_SHIFTOFF;
+	else if (strstr(actions + 4, "FLIP_STARTSTOP") != NULL)
+		action = ACTION_STARTSTOP_FLIP;
 	else if (strstr(actions + 4, "STARTSTOP") != NULL)
 		action = ACTION_STARTSTOP;
 	else if (strstr(actions + 4, "GND") != NULL)
@@ -291,6 +343,11 @@ void add_config_mapping(struct mapping **maps, unsigned char Type, unsigned char
 		action = ACTION_JOGREVERSE;
 	else if (strstr(actions + 4, "SC500") != NULL)
 		action = ACTION_SC500;
+	else if (strstr(actions + 4, "FLIPDECKS") != NULL)
+	{
+		scsettings.canFlipDecks = true;
+		action = ACTION_FLIPDECKS;
+	}	
 	else if (strstr(actions + 4, "NOTE") != NULL)
 	{
 		action = ACTION_NOTE;

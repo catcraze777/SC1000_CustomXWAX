@@ -25,6 +25,7 @@
 extern size_t ndeck;
 extern struct deck deck[];
 
+#define maxPathLength 250
 
 typedef struct SC_SETTINGS {
 
@@ -94,6 +95,19 @@ typedef struct SC_SETTINGS {
 
     bool midiRemapped;
     bool ioRemapped;
+
+    // Store whether the decks have been flipped.
+    bool areDecksFlipped;
+
+    // Store if we can flip decks (CHx_FLIPDECKS is mapped to an input.)
+    bool canFlipDecks;
+
+    // Do we invert the decks cut by the fader? (Ex: If flipped, you can cut the new sample deck instead of only one deck.)
+    int flipFader;
+
+    // Deck indices
+    int deckBeats;
+    int deckSamples;
 
 
 } SC_SETTINGS;

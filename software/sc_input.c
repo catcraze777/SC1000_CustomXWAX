@@ -502,10 +502,17 @@ void process_pic()
 	
 	faderOpen1 = 1; faderOpen2 = 1;
 	
-	fadertarget0 = deck[0].player.setVolume;
-	fadertarget1 = deck[1].player.setVolume;
-	
+	int beatDeck = 0;
+	int sampleDeck = 1;
 
+	if (scsettings.flipFader && scsettings.areDecksFlipped) {
+		beatDeck = 1;
+		sampleDeck = 0;
+	}
+
+	fadertarget0 = deck[beatDeck].player.setVolume;
+	fadertarget1 = deck[sampleDeck].player.setVolume;
+	
 	if (ADCs[0] < faderCutPoint1)
 	{ 
 		if (scsettings.cutbeats == 1) fadertarget0 = 0.0;
@@ -519,8 +526,8 @@ void process_pic()
 		faderOpen2 = 0;
 	}
 
-	deck[0].player.faderTarget = fadertarget0;
-	deck[1].player.faderTarget = fadertarget1; 
+	deck[beatDeck].player.faderTarget = fadertarget0;
+	deck[sampleDeck].player.faderTarget = fadertarget1; 
 
 	if (!scsettings.disablepicbuttons)
 	{
@@ -666,50 +673,50 @@ void process_rot()
 	// Handle rotary sensor
 
 	i2c_read_address(file_i2c_rot, 0x0c, &result);
-	deck[1].newEncoderAngle = ((int)result) << 8;
+	deck[scsettings.deckSamples].newEncoderAngle = ((int)result) << 8;
 	i2c_read_address(file_i2c_rot, 0x0d, &result);
-	deck[1].newEncoderAngle = (deck[1].newEncoderAngle & 0x0f00) | (int)result;
+	deck[scsettings.deckSamples].newEncoderAngle = (deck[scsettings.deckSamples].newEncoderAngle & 0x0f00) | (int)result;
 
 	if (scsettings.jogReverse) {
-		//printf("%d,",deck[1].newEncoderAngle);
-		deck[1].newEncoderAngle = 4095 - deck[1].newEncoderAngle;
-		//printf("%d\n",deck[1].newEncoderAngle);
+		//printf("%d,",deck[scsettings.deckSamples].newEncoderAngle);
+		deck[scsettings.deckSamples].newEncoderAngle = 4095 - deck[scsettings.deckSamples].newEncoderAngle;
+		//printf("%d\n",deck[scsettings.deckSamples].newEncoderAngle);
 	}
 
 	// First time, make sure there's no difference
-	if (deck[1].encoderAngle == 0xffff)
-		deck[1].encoderAngle = deck[1].newEncoderAngle;
+	if (deck[scsettings.deckSamples].encoderAngle == 0xffff)
+		deck[scsettings.deckSamples].encoderAngle = deck[scsettings.deckSamples].newEncoderAngle;
 
 	// Handle wrapping at zero
 
-	if (deck[1].newEncoderAngle < 1024 && deck[1].encoderAngle >= 3072)
+	if (deck[scsettings.deckSamples].newEncoderAngle < 1024 && deck[scsettings.deckSamples].encoderAngle >= 3072)
 	{ // We crossed zero in the positive direction
 
 		crossedZero = 1;
-		wrappedAngle = deck[1].encoderAngle - 4096;
+		wrappedAngle = deck[scsettings.deckSamples].encoderAngle - 4096;
 	}
-	else if (deck[1].newEncoderAngle >= 3072 && deck[1].encoderAngle < 1024)
+	else if (deck[scsettings.deckSamples].newEncoderAngle >= 3072 && deck[scsettings.deckSamples].encoderAngle < 1024)
 	{ // We crossed zero in the negative direction
 		crossedZero = -1;
-		wrappedAngle = deck[1].encoderAngle + 4096;
+		wrappedAngle = deck[scsettings.deckSamples].encoderAngle + 4096;
 	}
 	else
 	{
 		crossedZero = 0;
-		wrappedAngle = deck[1].encoderAngle;
+		wrappedAngle = deck[scsettings.deckSamples].encoderAngle;
 	}
 
 	// rotary sensor sometimes returns incorrect values, if we skip more than 100 ignore that value
 	// If we see 3 blips in a row, then I guess we better accept the new value
-	if (abs(deck[1].newEncoderAngle - wrappedAngle) > 100 && numBlips < 2)
+	if (abs(deck[scsettings.deckSamples].newEncoderAngle - wrappedAngle) > 100 && numBlips < 2)
 	{
-		//printf("blip! %d %d %d\n", deck[1].newEncoderAngle, deck[1].encoderAngle, wrappedAngle);
+		//printf("blip! %d %d %d\n", deck[scsettings.deckSamples].newEncoderAngle, deck[scsettings.deckSamples].encoderAngle, wrappedAngle);
 		numBlips++;
 	}
 	else
 	{
 		numBlips = 0;
-		deck[1].encoderAngle = deck[1].newEncoderAngle;
+		deck[scsettings.deckSamples].encoderAngle = deck[scsettings.deckSamples].newEncoderAngle;
 
 		if (pitchMode)
 		{
@@ -718,24 +725,24 @@ void process_rot()
 			{ // We just entered pitchmode, set offset etc
 
 				deck[(pitchMode - 1)].player.note_pitch = 1.0;
-				deck[1].angleOffset = -deck[1].encoderAngle;
+				deck[scsettings.deckSamples].angleOffset = -deck[scsettings.deckSamples].encoderAngle;
 				oldPitchMode = 1;
-				deck[1].player.capTouch = 0;
+				deck[scsettings.deckSamples].player.capTouch = 0;
 			}
 
 			// Handle wrapping at zero
 
 			if (crossedZero > 0)
 			{
-				deck[1].angleOffset += 4096;
+				deck[scsettings.deckSamples].angleOffset += 4096;
 			}
 			else if (crossedZero < 0)
 			{
-				deck[1].angleOffset -= 4096;
+				deck[scsettings.deckSamples].angleOffset -= 4096;
 			}
 
 			// Use the angle of the platter to control sample pitch
-			deck[(pitchMode - 1)].player.note_pitch = (((double)(deck[1].encoderAngle + deck[1].angleOffset)) / 16384) + 1.0;
+			deck[(pitchMode - 1)].player.note_pitch = (((double)(deck[scsettings.deckSamples].encoderAngle + deck[scsettings.deckSamples].angleOffset)) / 16384) + 1.0;
 		}
 		else
 		{
@@ -743,50 +750,50 @@ void process_rot()
 			if (scsettings.platterenabled)
 			{
 				// Handle touch sensor
-				if (capIsTouched || deck[1].player.motor_speed == 0.0)
+				if (capIsTouched || deck[scsettings.deckSamples].player.motor_speed == 0.0)
 				{
 
 					// Positive touching edge
-					if (!deck[1].player.capTouch || oldPitchMode && !deck[1].player.stopped)
+					if (!deck[scsettings.deckSamples].player.capTouch || oldPitchMode && !deck[scsettings.deckSamples].player.stopped)
 					{
-						deck[1].angleOffset = (deck[1].player.position * scsettings.platterspeed) - deck[1].encoderAngle;
+						deck[scsettings.deckSamples].angleOffset = (deck[scsettings.deckSamples].player.position * scsettings.platterspeed) - deck[scsettings.deckSamples].encoderAngle;
 						printf("touch!\n");
-						deck[1].player.target_position = deck[1].player.position;
-						deck[1].player.capTouch = 1;
+						deck[scsettings.deckSamples].player.target_position = deck[scsettings.deckSamples].player.position;
+						deck[scsettings.deckSamples].player.capTouch = 1;
 					}
 				}
 				else
 				{
-					deck[1].player.capTouch = 0;
+					deck[scsettings.deckSamples].player.capTouch = 0;
 				}
 			}
 
 			else
-				deck[1].player.capTouch = 1;
+				deck[scsettings.deckSamples].player.capTouch = 1;
 
-			/*if (deck[1].player.capTouch) we always want to dump the target position so we can do lasers etc
+			/*if (deck[scsettings.deckSamples].player.capTouch) we always want to dump the target position so we can do lasers etc
 			{*/
 
 			// Handle wrapping at zero
 
 			if (crossedZero > 0)
 			{
-				deck[1].angleOffset += 4096;
+				deck[scsettings.deckSamples].angleOffset += 4096;
 			}
 			else if (crossedZero < 0)
 			{
-				deck[1].angleOffset -= 4096;
+				deck[scsettings.deckSamples].angleOffset -= 4096;
 			}
 
 			// Convert the raw value to track position and set player to that pos
 
-			deck[1].player.target_position = (double)(deck[1].encoderAngle + deck[1].angleOffset) / scsettings.platterspeed;
+			deck[scsettings.deckSamples].player.target_position = (double)(deck[scsettings.deckSamples].encoderAngle + deck[scsettings.deckSamples].angleOffset) / scsettings.platterspeed;
 
 			// Loop when track gets to end
 
-			/*if (deck[1].player.target_position > ((double)deck[1].player.track->length / (double)deck[1].player.track->rate))
+			/*if (deck[scsettings.deckSamples].player.target_position > ((double)deck[scsettings.deckSamples].player.track->length / (double)deck[scsettings.deckSamples].player.track->rate))
 					{
-						deck[1].player.target_position = 0;
+						deck[scsettings.deckSamples].player.target_position = 0;
 						angleOffset = encoderAngle;
 					}*/
 		}
@@ -915,18 +922,18 @@ void *SC_InputThread(void *ptr)
 		}
 		else // couldn't find input processor, just play the tracks
 		{
-			deck[1].player.capTouch = 1;
-			deck[0].player.faderTarget = 0.0;
-			deck[1].player.faderTarget = 0.5;
-			deck[0].player.justPlay = 1;
-			deck[0].player.pitch = 1;
+			deck[scsettings.deckSamples].player.capTouch = 1;
+			deck[scsettings.deckBeats].player.faderTarget = 0.0;
+			deck[scsettings.deckSamples].player.faderTarget = 0.5;
+			// deck[scsettings.deckBeats].player.justPlay = 1;
+			deck[scsettings.deckBeats].player.pitch = 1;
 
 			clock_gettime(CLOCK_MONOTONIC, &ts);
 			inputtime = (double)ts.tv_sec + ((double)ts.tv_nsec / 1000000000.0);
 
 			if (lastinputtime != 0)
 			{
-				deck[1].player.target_position += (inputtime - lastinputtime);
+				deck[scsettings.deckSamples].player.target_position += (inputtime - lastinputtime);
 			}
 
 			lastinputtime = inputtime;
